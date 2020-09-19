@@ -303,15 +303,11 @@ module cuboid(
                         }
                     }
                 } else {
-                    hull() {
-                        corner_shape([-1,-1,-1]);
-                        corner_shape([ 1,-1,-1]);
-                        corner_shape([-1, 1,-1]);
-                        corner_shape([ 1, 1,-1]);
-                        corner_shape([-1,-1, 1]);
-                        corner_shape([ 1,-1, 1]);
-                        corner_shape([-1, 1, 1]);
-                        corner_shape([ 1, 1, 1]);
+                    intersection() {
+                        sz_offset = _rounding_size_offset(size=size, edges=edges, rounding=rounding);
+                        translate(sz_offset[1])
+                            cuboid(sz_offset[0], rounding=rounding, trimcorners=trimcorners);
+                        cube(size, center=true);
                     }
                 }
             } else {
@@ -334,6 +330,24 @@ function cuboid(
     spin=0,
     orient=UP
 ) = no_function("cuboid");
+
+// Calculates a size and offset of a rounded cuboid to intersect with a
+// non-rounded one for the purposes of only rounding some edges
+//
+// This collects the positive and negative non-rounded edges to determine in
+// which direction to extend the cuboid.
+function _rounding_size_offset(size, edges, rounding, pos=[0,0,0], neg=[0,0,0], i=0, axis=0) =
+    (axis == 3) ? [size + rounding*(vfloor(pos) + vfloor(neg)), rounding/2*(vfloor(pos) - vfloor(neg))] :
+    (edges[axis][i] == 0) ?  _rounding_size_offset(size=size,
+                                                  pos=pos + [for (x=EDGE_OFFSETS[axis][i]) x > 0 ? 1 : 0]/4,
+                                                  neg=neg + [for (x=EDGE_OFFSETS[axis][i]) x < 0 ? 1 : 0]/4,
+                                                  edges=edges,
+                                                  rounding=rounding,
+                                                  axis=i == 3 ? axis + 1 : axis,
+                                                  i=(i+1) % 4) :
+    _rounding_size_offset(size=size, pos=pos, neg=neg, rounding=rounding, edges=edges,
+                          axis=i == 3 ? axis + 1 : axis,
+                          i=(i+1) % 4);
 
 
 
